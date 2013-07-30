@@ -60,7 +60,7 @@ class XPathExpr(object):
             # We weren't doing a test anyway
             return
         self.add_condition(
-            "name() = %s" % GenericTranslator.xpath_literal(self.element))
+            "self::%s" % self.element)
         self.element = '*'
 
     def add_star_prefix(self):
@@ -287,7 +287,7 @@ class GenericTranslator(object):
         if safe:
             attrib = '@' + name
         else:
-            attrib = 'attribute::*[name() = %s]' % self.xpath_literal(name)
+            attrib = 'attribute::*[self::%s]' % name
         if self.lower_case_attribute_values:
             value = selector.value.lower()
         else:

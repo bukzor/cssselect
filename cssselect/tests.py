@@ -315,11 +315,11 @@ class TestCssselect(unittest.TestCase):
             "e[@hreflang and ("
                "@hreflang = 'en' or starts-with(@hreflang, 'en-'))]")
         assert xpath('e:nth-child(1)') == (
-            "*/*[name() = 'e' and (position() = 1)]")
+            "*/*[self::e and (position() = 1)]")
         assert xpath('e:nth-last-child(1)') == (
-            "*/*[name() = 'e' and (position() = last() - 1)]")
+            "*/*[self::e and (position() = last() - 1)]")
         assert xpath('e:nth-last-child(2n+2)') == (
-            "*/*[name() = 'e' and ("
+            "*/*[self::e and ("
                "(position() +2) mod -2 = 0 and position() < (last() -2))]")
         assert xpath('e:nth-of-type(1)') == (
             "*/e[position() = 1]")
@@ -332,15 +332,15 @@ class TestCssselect(unittest.TestCase):
                "/descendant-or-self::*/*[@class and contains("
                "concat(' ', normalize-space(@class), ' '), ' aclass ')]")
         assert xpath('e:first-child') == (
-            "*/*[name() = 'e' and (position() = 1)]")
+            "*/*[self::e and (position() = 1)]")
         assert xpath('e:last-child') == (
-            "*/*[name() = 'e' and (position() = last())]")
+            "*/*[self::e and (position() = last())]")
         assert xpath('e:first-of-type') == (
             "*/e[position() = 1]")
         assert xpath('e:last-of-type') == (
             "*/e[position() = last()]")
         assert xpath('e:only-child') == (
-            "*/*[name() = 'e' and (last() = 1)]")
+            "*/*[self::e and (last() = 1)]")
         assert xpath('e:only-of-type') == (
             "e[last() = 1]")
         assert xpath('e:empty') == (
@@ -369,7 +369,7 @@ class TestCssselect(unittest.TestCase):
         assert xpath('e > f') == (
             "e/f")
         assert xpath('e + f') == (
-            "e/following-sibling::*[name() = 'f' and (position() = 1)]")
+            "e/following-sibling::*[self::f and (position() = 1)]")
         assert xpath('e ~ f') == (
             "e/following-sibling::f")
         assert xpath('div#container p') == (
@@ -377,13 +377,13 @@ class TestCssselect(unittest.TestCase):
 
         # Invalid characters in XPath element names
         assert xpath(r'di\a0 v') == (
-            u("*[name() = 'di v']"))  # di\xa0v
+            u("*[self::di v]"))  # di\xa0v
         assert xpath(r'di\[v') == (
-            "*[name() = 'di[v']")
+            "*[self::di[v]")
         assert xpath(r'[h\a0 ref]') == (
-            u("*[attribute::*[name() = 'h ref']]"))  # h\xa0ref
+            u("*[attribute::*[self::h ref]]"))  # h\xa0ref
         assert xpath(r'[h\]ref]') == (
-            "*[attribute::*[name() = 'h]ref']]")
+            "*[attribute::*[self::h]ref]]")
 
         self.assertRaises(ExpressionError, xpath, u(':fİrst-child'))
         self.assertRaises(ExpressionError, xpath, ':first-of-type')
@@ -608,9 +608,11 @@ class TestCssselect(unittest.TestCase):
         assert pcss('ol :Not(li[class])') == [
             'first-li', 'second-li', 'li-div',
             'fifth-li', 'sixth-li', 'seventh-li']
-        # Invalid characters in XPath element names, should not crash
-        assert pcss(r'di\a0 v', r'div\[') == []
-        assert pcss(r'[h\a0 ref]', r'[h\]ref]') == []
+        # Invalid characters in XPath element names, should crash
+        self.assertRaises(etree.XPathEvalError, pcss, r'di\a0 v')
+        self.assertRaises(etree.XPathEvalError, pcss, r'div\[')
+        self.assertRaises(etree.XPathEvalError, pcss, r'[h\a0 ref]')
+        self.assertRaises(etree.XPathEvalError, pcss, r'[h\]ref]')
 
         # HTML-specific
         assert pcss(':link', html_only=True) == [
